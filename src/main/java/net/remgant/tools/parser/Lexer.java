@@ -5,23 +5,101 @@ import com.google.common.collect.ImmutableSet;
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.StringReader;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 
-public class Lexer {
-     private Set<Character> specialChars;
+public class Lexer implements ListIterator<Token> {
+    private Set<Character> specialChars;
+    protected List<Token> list;
 
-     public Lexer() {
-          specialChars = ImmutableSet.of(',', '.', '(', ')', '?', '{', '}');
-     }
+    public Lexer(String source) {
+        this(ImmutableSet.of(',', '.', '(', ')', '?', '{', '}'), source);
+    }
 
-     public Lexer(Set<Character> specialChars) {
-          this.specialChars = specialChars;
-     }
+    public Lexer(Set<Character> specialChars, String source) {
+        this.specialChars = specialChars;
+        try {
+            tokenize(source);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
 
-     public List<Token> tokenize(final String source) throws IOException {
-        List<Token> list = new ArrayList<>();
+    ListIterator<Token> listIterator;
+
+    @Override
+    public boolean hasNext() {
+        if (listIterator == null)
+            listIterator = list.listIterator();
+        return listIterator.hasNext();
+    }
+
+    @Override
+    public Token next() {
+        if (listIterator == null)
+            listIterator = list.listIterator();
+        return listIterator.next();
+    }
+
+    @Override
+    public boolean hasPrevious() {
+        if (listIterator == null)
+            listIterator = list.listIterator();
+        return listIterator.hasPrevious();
+    }
+
+    @Override
+    public Token previous() {
+        if (listIterator == null)
+            listIterator = list.listIterator();
+        return listIterator.previous();
+    }
+
+    @Override
+    public int nextIndex() {
+        if (listIterator == null)
+            listIterator = list.listIterator();
+        return listIterator.nextIndex();
+    }
+
+    @Override
+    public int previousIndex() {
+        if (listIterator == null)
+            listIterator = list.listIterator();
+        return listIterator.previousIndex();
+    }
+
+    @Override
+    public void remove() {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void set(Token token) {
+        throw new UnsupportedOperationException();
+
+    }
+
+    @Override
+    public void add(Token token) {
+        throw new UnsupportedOperationException();
+    }
+
+    public Token nextToken() {
+        if (list.size() == 0)
+            return null;
+        return list.remove(0);
+    }
+
+    public void pushBack(Token t) {
+        list.add(0, t);
+    }
+
+    private void tokenize(final String source) throws IOException {
+        list = new ArrayList<>();
         boolean inSingleQuote = false;
         boolean inDoubleQuote = false;
         boolean inNumber = false;
@@ -108,6 +186,5 @@ public class Lexer {
         }
         if (sb.length() > 0)
             list.add(Token.findToken(sb.toString()));
-        return list;
     }
 }

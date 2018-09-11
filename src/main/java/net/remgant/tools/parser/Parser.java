@@ -15,6 +15,7 @@ public abstract class Parser {
     final private Logger log = LoggerFactory.getLogger(Parser.class);
 
     protected Lexer lexer;
+    protected Set<Character> lexerSpecialChars;
     private Set<Integer> terminalStates = ImmutableSet.of();
 
     static class State {
@@ -63,13 +64,16 @@ public abstract class Parser {
     }
 
     public ParserResult parse(String source) throws Exception {
-        if (lexer == null)
-              throw new RuntimeException("A lexer must be defined");
-        List<Token> tokenList = lexer.tokenize(source);
+        Lexer lexer;
+        if (lexerSpecialChars == null)
+            lexer = new Lexer(source);
+        else
+         lexer = new Lexer(lexerSpecialChars,source);
         int state = 0;
         int r;
         ParserResult parserResult = null;
-        for (Token token : tokenList) {
+        Token token;
+        while ((token = lexer.nextToken()) != null) {
             log.trace(String.format("token=%s, state=%s", token, state));
             if (state < 0)
                 throw new Exception(String.format("no next state for token %s", token));

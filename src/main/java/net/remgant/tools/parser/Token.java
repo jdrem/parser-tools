@@ -231,6 +231,11 @@ public abstract class Token {
         return negated;
     }
 
+    static {
+        Token.Char.set = ImmutableSet.of();
+        Token.Keyword.set = ImmutableSet.of();
+    }
+
     protected static void init(Class thisClass) {
         Field fields[] = thisClass.getDeclaredFields();
         ImmutableSet.Builder<String> charBuilder = ImmutableSet.builder();

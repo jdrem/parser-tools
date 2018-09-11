@@ -82,7 +82,7 @@ public class TestParser extends Parser {
     }
     TestParser() {
         super();
-        lexer = new Lexer(ImmutableSet.of('+','-','=',';','(',')'));
+        lexerSpecialChars = ImmutableSet.of('+','-','=',';','(',')');
     }
 
     @Override
