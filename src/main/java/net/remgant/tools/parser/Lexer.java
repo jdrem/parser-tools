@@ -88,12 +88,6 @@ public class Lexer implements ListIterator<Token> {
         throw new UnsupportedOperationException();
     }
 
-    public Token nextToken() {
-        if (list.size() == 0)
-            return null;
-        return list.remove(0);
-    }
-
     public void pushBack(Token t) {
         list.add(0, t);
     }

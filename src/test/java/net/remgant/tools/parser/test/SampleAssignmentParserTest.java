@@ -5,43 +5,38 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 
-public class ParserTest {
+public class SampleAssignmentParserTest {
 
     @Test
     public void testSingleInt() throws Exception {
-        TestParser parser = new TestParser();
-        parser.init();
+        SampleAssignmentParser parser = new SampleAssignmentParser();
         ParserResult c = parser.parse("a = 1;");
         System.out.println(c);
-        assertEquals("a = 1", c.toString());
+        assertEquals("AssignmentStatement{target='a', expression=1}", c.toString());
     }
 
     @Test
     public void testSimpleExpression() throws Exception {
-        TestParser parser = new TestParser();
-        parser.init();
+        SampleAssignmentParser parser = new SampleAssignmentParser();
         ParserResult c = parser.parse("a = b + c;");
         System.out.println(c);
-        assertEquals("a = b c +", c.toString());
-
+        assertEquals("AssignmentStatement{target='a', expression=b c +}", c.toString());
     }
 
     @Test
     public void testExpressionThreeArgs() throws Exception {
-        TestParser parser = new TestParser();
-        parser.init();
+        SampleAssignmentParser parser = new SampleAssignmentParser();
         ParserResult c = parser.parse("a = b + c + d;");
         System.out.println(c);
-        assertEquals("a = b c + d +", c.toString());
+        assertEquals("AssignmentStatement{target='a', expression=b c + d +}", c.toString());
 
     }
 
     @Test
     public void testExpressionWithParen() throws Exception {
-        TestParser parser = new TestParser();
-        parser.init();
+        SampleAssignmentParser parser = new SampleAssignmentParser();
         ParserResult c = parser.parse("a = b + (c + d);");
         System.out.println(c);
-        assertEquals("a = b c d + +", c.toString());
+        assertEquals("AssignmentStatement{target='a', expression=b c d + +}", c.toString());
     }
 }
