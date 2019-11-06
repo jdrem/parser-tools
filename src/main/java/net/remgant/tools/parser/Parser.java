@@ -16,7 +16,8 @@ public abstract class Parser {
 
     protected Lexer lexer;
     protected Set<Character> lexerSpecialChars;
-    private Set<Integer> terminalStates = ImmutableSet.of();
+    @SuppressWarnings("WeakerAccess")
+    protected Set<Integer> terminalStates = ImmutableSet.of();
 
     static class State {
         int stateNumber;
