@@ -25,6 +25,8 @@ public class ExpressionParser {
         this.endTokens = endTokens;
         expressionStack = new Stack<>();
         expression(source);
+        if (expressionStack.empty())
+            return new Expression();
         return expressionStack.pop();
     }
 
@@ -134,6 +136,10 @@ public class ExpressionParser {
 
     private void factor(ListIterator<Token> soruce) {
         Token next = soruce.next();
+        if (match(next)) {
+            soruce.previous();
+            return;
+        }
         if (!(next.getValue().equals("(") || next.getValue().equals(")"))) {
             expressionStack.push(new Expression(next));
             return;
