@@ -94,4 +94,13 @@ public class ExpressionParserTest {
         assertEquals("a b * c d * + e f * g h * + > i j * k l + <= and", result.toString());
         assertFalse(lexer.hasNext());
     }
+
+    @Test
+    public void testEmptyExpression() throws Exception {
+        Lexer lexer = new Lexer(ImmutableSet.of(';', '(', ')'), ";");
+        ParserResult result = expressionParser.parse(lexer, ImmutableSet.of(TestToken.SEMI_COLON));
+        System.out.println(result);
+        assertEquals("", result.toString());
+        assertTrue(lexer.hasNext());
+    }
 }
