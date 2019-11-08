@@ -13,6 +13,14 @@
         <connection>scm:git:git@github.com:jdrem/parser-tools.git</connection>
     </scm>
 
+    <distributionManagement>
+       <repository>
+         <id>github</id>
+         <name>GitHub jdrem Apache Maven Packages</name>
+         <url>https://maven.pkg.github.com/jdrem/parser-tools</url>
+       </repository>
+    </distributionManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.slf4j</groupId>
