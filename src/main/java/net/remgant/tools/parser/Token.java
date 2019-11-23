@@ -45,7 +45,7 @@ public abstract class Token {
 
     public static final Predicate<Token> MATCH_ANY = (t) -> true;
 
-    static Map<Predicate<Token>, String> tokenMap = new HashMap<>();
+    protected static Map<Predicate<Token>, String> tokenMap = new HashMap<>();
 
     static {
         tokenMap.put(MATCH_ANY, "MATCH_ANY");
