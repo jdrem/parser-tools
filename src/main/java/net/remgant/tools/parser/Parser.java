@@ -80,6 +80,10 @@ public abstract class Parser {
         }
     }
 
+    protected ParserResult resultInitializer() {
+        return null;
+    }
+    
     public ParserResult parse(String source) throws Exception {
 //        Lexer lexer;
         if (lexerSpecialChars == null)
@@ -88,7 +92,7 @@ public abstract class Parser {
             lexer = new Lexer(lexerSpecialChars, source);
         int state = 0;
         int r;
-        ParserResult parserResult = null;
+        ParserResult parserResult = resultInitializer();
         Token token;
         while (lexer.hasNext()) {
             token = lexer.next();
