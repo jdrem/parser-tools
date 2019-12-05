@@ -1,5 +1,6 @@
 package net.remgant.tools.parser.test;
 
+import net.remgant.tools.parser.ParserException;
 import net.remgant.tools.parser.ParserResult;
 import org.junit.Test;
 
@@ -8,7 +9,7 @@ import static org.junit.Assert.assertTrue;
 
 public class ExpressionBuilderSampleParserTest {
     @Test
-    public void testSingleInt() throws Exception {
+    public void testSingleInt() throws ParserException {
         ExpressionBuilderSampleParser parser = new ExpressionBuilderSampleParser();
         ParserResult c = parser.parse("a = 1;");
         System.out.println(c);
@@ -19,7 +20,7 @@ public class ExpressionBuilderSampleParserTest {
     }
 
     @Test
-    public void testSimpleExpression() throws Exception {
+    public void testSimpleExpression() throws ParserException {
         ExpressionBuilderSampleParser parser = new ExpressionBuilderSampleParser();
         ParserResult c = parser.parse("a = b + c;");
         System.out.println(c);
@@ -30,7 +31,7 @@ public class ExpressionBuilderSampleParserTest {
     }
 
     @Test
-    public void testExpressionThreeArgs() throws Exception {
+    public void testExpressionThreeArgs() throws ParserException {
         ExpressionBuilderSampleParser parser = new ExpressionBuilderSampleParser();
         ParserResult c = parser.parse("a = b + c + d;");
         System.out.println(c);
@@ -41,7 +42,7 @@ public class ExpressionBuilderSampleParserTest {
     }
 
     @Test
-    public void testExpressionWithParen() throws Exception {
+    public void testExpressionWithParen() throws ParserException {
         ExpressionBuilderSampleParser parser = new ExpressionBuilderSampleParser();
         ParserResult c = parser.parse("a = b + (c + d);");
         System.out.println(c);
