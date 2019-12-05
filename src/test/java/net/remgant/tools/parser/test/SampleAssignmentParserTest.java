@@ -16,6 +16,8 @@
  */
 package net.remgant.tools.parser.test;
 
+import net.remgant.tools.parser.NoMatchForTokenException;
+import net.remgant.tools.parser.ParserException;
 import net.remgant.tools.parser.ParserResult;
 import org.junit.Test;
 
@@ -24,7 +26,7 @@ import static org.junit.Assert.assertEquals;
 public class SampleAssignmentParserTest {
 
     @Test
-    public void testSingleInt() throws Exception {
+    public void testSingleInt() throws ParserException {
         SampleAssignmentParser parser = new SampleAssignmentParser();
         ParserResult c = parser.parse("a = 1;");
         System.out.println(c);
@@ -32,7 +34,7 @@ public class SampleAssignmentParserTest {
     }
 
     @Test
-    public void testSimpleExpression() throws Exception {
+    public void testSimpleExpression() throws ParserException {
         SampleAssignmentParser parser = new SampleAssignmentParser();
         ParserResult c = parser.parse("a = b + c;");
         System.out.println(c);
@@ -40,7 +42,7 @@ public class SampleAssignmentParserTest {
     }
 
     @Test
-    public void testExpressionThreeArgs() throws Exception {
+    public void testExpressionThreeArgs() throws ParserException {
         SampleAssignmentParser parser = new SampleAssignmentParser();
         ParserResult c = parser.parse("a = b + c + d;");
         System.out.println(c);
@@ -49,10 +51,16 @@ public class SampleAssignmentParserTest {
     }
 
     @Test
-    public void testExpressionWithParen() throws Exception {
+    public void testExpressionWithParen() throws ParserException {
         SampleAssignmentParser parser = new SampleAssignmentParser();
         ParserResult c = parser.parse("a = b + (c + d);");
         System.out.println(c);
         assertEquals("AssignmentStatement{target='a', expression=b c d + +}", c.toString());
+    }
+
+    @Test(expected = NoMatchForTokenException.class)
+    public void testSyntaxError() throws ParserException {
+        SampleAssignmentParser parser = new SampleAssignmentParser();
+        ParserResult c = parser.parse("a = b + + c;");
     }
 }
