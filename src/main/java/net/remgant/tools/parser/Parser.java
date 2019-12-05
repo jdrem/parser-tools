@@ -84,7 +84,7 @@ public abstract class Parser {
         return null;
     }
     
-    public ParserResult parse(String source) throws Exception {
+    public ParserResult parse(String source) throws ParserException {
 //        Lexer lexer;
         if (lexerSpecialChars == null)
             lexer = new Lexer(source);
@@ -98,7 +98,7 @@ public abstract class Parser {
             token = lexer.next();
             log.trace(String.format("token=%s, state=%s", token, state));
             if (state < 0)
-                throw new Exception(String.format("no next state for token %s", token));
+                throw new NoStateForTokenException(token.getValue());
             List<State> plist = stateList.get(state);
             r = -1;
             for (int i = 0; i < plist.size(); i++) {
@@ -111,7 +111,7 @@ public abstract class Parser {
             }
             if (r == -1) {
                 log.trace(String.format("no match: token=%s, state=%d", token, state));
-                throw new Exception("Parser error");
+                throw new NoMatchForTokenException(token.getValue(), state);
             }
 
             if (plist.get(r).action != null)
