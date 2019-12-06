@@ -53,10 +53,17 @@ public abstract class Parser {
 
     protected void addState(int state, Predicate<Token> predicate, int nextState, ParserAction action) {
         if (stateList.size() < state + 1) {
+            if (stateList.size() < state + 1)
+                for (int i=0; i<state + 1; i++)
+                    stateList.add(null);
             List<State> list = new ArrayList<>();
-            stateList.add(state, list);
+            stateList.set(state, list);
         }
         List<State> list = stateList.get(state);
+        if (list == null) {
+            list = new ArrayList<>();
+            stateList.set(state, list);
+        }
         list.add(new State(state, predicate, nextState, action));
     }
 
@@ -67,8 +74,10 @@ public abstract class Parser {
         init();
     }
 
-    protected void printStateDiagram(@SuppressWarnings("SameParameterValue") PrintStream out) {
+    public void printStateDiagram(@SuppressWarnings("SameParameterValue") PrintStream out) {
         for (List<State> l : stateList) {
+            if (l == null)
+                continue;
             for (State s : l) {
                 String ts;
                 if (Token.tokenMap.containsKey(s.predicate))
