@@ -107,7 +107,7 @@ public abstract class Token {
             tokenMap.put(INSTANCE, "Identifier.INSTANCE");
         }
 
-        Identifier(String v) {
+        public Identifier(String v) {
             super(v);
         }
 
@@ -177,7 +177,7 @@ public abstract class Token {
     public static class Regex extends Token {
         Pattern pattern;
 
-        static Predicate<Token> of(String s) {
+        static public Predicate<Token> of(String s) {
             Pattern p = Pattern.compile(s);
             Predicate<Token> predicate = (t) -> p.matcher(t.value).matches();
             tokenMap.put(predicate, "Regex: " + s);
