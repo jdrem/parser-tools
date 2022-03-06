@@ -44,6 +44,10 @@ public class Lexer implements ListIterator<Token> {
         }
     }
 
+    public Lexer(Iterable<String> stringListIterator) {
+        tokenize(stringListIterator);
+    }
+
     ListIterator<Token> listIterator;
 
     @Override
@@ -196,5 +200,11 @@ public class Lexer implements ListIterator<Token> {
         }
         if (sb.length() > 0)
             list.add(Token.findToken(sb.toString()));
+    }
+
+
+    private void tokenize(Iterable<String> strings) {
+        list = new ArrayList<>();
+        strings.forEach(s -> list.add(Token.findToken(s)));
     }
 }
