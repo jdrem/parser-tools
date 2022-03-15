@@ -218,6 +218,42 @@ public abstract class Token {
         }
     }
 
+    static class TokenFinder {
+        Set<String> keywordSet;
+        Set<String> charSet;
+        Set<String> operatorSet;
+
+        protected TokenFinder() {
+            this.keywordSet = ImmutableSet.of();
+            this.charSet = ImmutableSet.of();
+            this.operatorSet = ImmutableSet.of();
+        }
+
+        protected TokenFinder(Set<String> keywordSet, Set<String> charSet, Set<String> operatorSet) {
+            this.keywordSet = keywordSet;
+            this.charSet = charSet;
+            this.operatorSet = operatorSet;
+        }
+
+        public Token findToken(String s) {
+            if (keywordSet.contains(s.toUpperCase()))
+                return new Token.Keyword(s.toUpperCase());
+            if (operatorSet.contains(s))
+                return new Token.Operator(s.toUpperCase());
+            if (charSet.contains(s))
+                return new Token.Char(s.toUpperCase());
+            if (NumericString.instancePattern.matcher(s).matches())
+                return new NumericString(s);
+            if (s.length() >= 2 && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'' ||
+                    s.charAt(0) == '\"' && s.charAt(s.length() - 1) == '\"'))
+                return new CharString(s);
+            return new Identifier(s);
+        }
+    }
+
+    public static TokenFinder defaultTokenFinder = new TokenFinder();
+
+    @Deprecated
     public static Token findToken(String s) {
         if (Keyword.set.contains(s.toUpperCase()))
             return new Token.Keyword(s.toUpperCase());
@@ -275,6 +311,37 @@ public abstract class Token {
     static {
         Token.Char.set = ImmutableSet.of();
         Token.Keyword.set = ImmutableSet.of();
+        Token.Operator.set = ImmutableSet.of();
+    }
+
+    public static TokenFinder createTokenFinderFromClass(Class<? extends Token> thisClass) {
+        Field[] fields = thisClass.getDeclaredFields();
+        ImmutableSet.Builder<String> charBuilder = ImmutableSet.builder();
+        ImmutableSet.Builder<String> keywordBuilder = ImmutableSet.builder();
+        ImmutableSet.Builder<String> operatorBuilder = ImmutableSet.builder();
+        for (Field f : fields) {
+            f.setAccessible(true);
+            Object o;
+            try {
+                o = f.get(null);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+            if (o instanceof Char) {
+                Char aChar = (Char) o;
+                tokenMap.put(aChar.getPredicate(), aChar.getValue());
+                charBuilder.add(aChar.getValue());
+            } else if (o instanceof Keyword) {
+                Keyword keyword = (Keyword) o;
+                tokenMap.put(keyword.getPredicate(), keyword.getValue());
+                keywordBuilder.add(keyword.getValue());
+            } else if (o instanceof Operator) {
+                Operator operator = (Operator) o;
+                tokenMap.put(operator.getPredicate(), operator.getValue());
+                operatorBuilder.add(operator.getValue());
+            }
+        }
+        return new TokenFinder(keywordBuilder.build(), charBuilder.build(), operatorBuilder.build());
     }
 
     protected static void init(Class<?> thisClass) {
@@ -303,8 +370,5 @@ public abstract class Token {
                 operatorBuilder.add(operator.getValue());
             }
         }
-        Token.Char.set = charBuilder.build();
-        Keyword.set = keywordBuilder.build();
-        Operator.set = operatorBuilder.build();
     }
 }

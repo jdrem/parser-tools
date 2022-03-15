@@ -34,6 +34,7 @@ public abstract class Parser {
     protected Set<Character> lexerSpecialChars;
     @SuppressWarnings("WeakerAccess")
     protected Set<Integer> terminalStates = ImmutableSet.of();
+    protected Token.TokenFinder tokenFinder;
 
     static class State {
         int stateNumber;
@@ -80,13 +81,26 @@ public abstract class Parser {
                 list = new ArrayList<>();
                 stateList.set(state, list);
             }
-            list.add(new State(state, token.getPredicate(), nextState, action));
-        }
+        list.add(new State(state, token.getPredicate(), nextState, action));
+    }
+
     abstract protected void init();
 
     protected Parser() {
+        this(ImmutableSet.of());
+    }
+
+    protected Parser(Set<Character> lexicalSpecialChars) {
+        this.lexerSpecialChars = lexicalSpecialChars;
         stateList = new ArrayList<>();
         init();
+        Class<?>[] declaredClasses = this.getClass().getDeclaredClasses();
+        for (Class<?> aClass : declaredClasses) {
+            if (Token.class.isAssignableFrom(aClass)) {
+                tokenFinder = Token.createTokenFinderFromClass((Class<Token>) aClass);
+                break;
+            }
+        }
     }
 
     public void printStateDiagram(@SuppressWarnings("SameParameterValue") PrintStream out) {
@@ -114,6 +128,8 @@ public abstract class Parser {
             lexer = new Lexer(source);
         else
             lexer = new Lexer(lexerSpecialChars, source);
+        if (tokenFinder != null)
+            lexer.setTokenFinder(tokenFinder);
         int state = 0;
         int r;
         ParserResult parserResult = resultInitializer();
