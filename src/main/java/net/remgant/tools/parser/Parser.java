@@ -87,7 +87,7 @@ public abstract class Parser {
     abstract protected void init();
 
     protected Parser() {
-        this(ImmutableSet.of());
+        this(Lexer.defaultSpecialChars);
     }
 
     protected Parser(Set<Character> lexicalSpecialChars) {
@@ -123,13 +123,11 @@ public abstract class Parser {
     }
     
     public ParserResult parse(String source) throws ParserException {
-//        Lexer lexer;
         if (lexerSpecialChars == null)
-            lexer = new Lexer(source);
-        else
-            lexer = new Lexer(lexerSpecialChars, source);
-        if (tokenFinder != null)
-            lexer.setTokenFinder(tokenFinder);
+            lexerSpecialChars = Lexer.defaultSpecialChars;
+        if (tokenFinder == null)
+            tokenFinder = Token.defaultTokenFinder;
+        lexer = new Lexer(source, lexerSpecialChars, tokenFinder);
         int state = 0;
         int r;
         ParserResult parserResult = resultInitializer();

@@ -31,14 +31,19 @@ public class Lexer implements ListIterator<Token> {
     private Set<Character> specialChars;
     protected List<Token> list;
     private Token.TokenFinder tokenFinder;
+    public final static Set<Character> defaultSpecialChars =  ImmutableSet.of(',', '.', '(', ')', '?', '{', '}');
 
     public Lexer(String source) {
-        this(ImmutableSet.of(',', '.', '(', ')', '?', '{', '}'), source);
+        this(source, defaultSpecialChars, Token.defaultTokenFinder);
     }
 
     public Lexer(Set<Character> specialChars, String source) {
+        this(source, specialChars, Token.defaultTokenFinder);
+    }
+
+    public Lexer(String source, Set<Character> specialChars, Token.TokenFinder tokenFinder) {
         this.specialChars = specialChars;
-        this.tokenFinder = Token.defaultTokenFinder;
+        this.tokenFinder = tokenFinder;
         try {
             tokenize(source);
         } catch (IOException e) {
@@ -47,14 +52,19 @@ public class Lexer implements ListIterator<Token> {
     }
 
     public Lexer(Iterable<String> stringListIterator) {
-        this.tokenFinder = Token.defaultTokenFinder;
-        tokenize(stringListIterator);
+        this(stringListIterator, defaultSpecialChars, Token.defaultTokenFinder);
     }
 
-    public void setTokenFinder(Token.TokenFinder tokenFinder) {
+    public Lexer(Iterable<String> stringIterator, Token.TokenFinder tokenFinder) {
+        this(stringIterator, defaultSpecialChars, tokenFinder);
+    }
+
+    public Lexer(Iterable<String> stringIterator, Set<Character> specialChars, Token.TokenFinder tokenFinder) {
+        this.specialChars = specialChars;
         this.tokenFinder = tokenFinder;
+        tokenize(stringIterator);
     }
-
+    
     ListIterator<Token> listIterator;
 
     @Override
