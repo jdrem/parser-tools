@@ -171,6 +171,14 @@ public abstract class Token {
         }
     }
 
+    public static class BooleanString extends Token {
+        final public static Pattern instancePattern = Pattern.compile("true|false");
+        final public static Predicate<Token> INSTANCE = (t) -> instancePattern.matcher(t.value).matches();
+        public BooleanString(String v) {
+            super(v);
+        }
+    }
+
     public static class NumericString extends Token {
         final private static Pattern instancePattern = Pattern.compile("\\p{Digit}+(?:\\.\\p{Digit}+)?");
         final private static Pattern anyIntegerPattern = Pattern.compile("\\p{Digit}+");
