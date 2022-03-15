@@ -35,12 +35,20 @@ import java.util.stream.Stream;
 public abstract class Token {
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
+    @Deprecated
     protected @interface KeywordToken {
     }
 
     @Retention(RetentionPolicy.RUNTIME)
     @Target(ElementType.FIELD)
+    @Deprecated
     protected @interface CharToken {
+    }
+
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target(ElementType.FIELD)
+    @Deprecated
+    protected @interface OperatorToken {
     }
 
     public static final Predicate<Token> MATCH_ANY = (t) -> true;
@@ -52,13 +60,19 @@ public abstract class Token {
     }
 
     String value;
+    Predicate<Token> predicate;
 
     public String getValue() {
         return value;
     }
 
+    public Predicate<Token> getPredicate() {
+        return predicate;
+    }
+
     Token(String v) {
         this.value = v;
+        this.predicate = t -> t.getValue().equalsIgnoreCase(v);
     }
 
     protected Token() {
@@ -83,10 +97,10 @@ public abstract class Token {
         return Objects.hashCode(value);
     }
 
-    static class Keyword extends Token {
+    public static class Keyword extends Token {
         static Set<String> set;
 
-        Keyword(String value) {
+        public Keyword(String value) {
             super(value);
         }
     }
@@ -94,10 +108,19 @@ public abstract class Token {
     public static class Char extends Token {
         static Set<String> set;
 
-        Char(String v) {
+        public Char(String v) {
             super(v);
         }
     }
+
+    public static class Operator extends Token {
+        static Set<String> set;
+
+        public Operator(String v) {
+            super(v);
+        }
+    }
+
 
     public static class Identifier extends Token {
         private static final Pattern instancePattern = Pattern.compile("\\p{Alpha}\\p{Alnum}*");
@@ -198,6 +221,8 @@ public abstract class Token {
     public static Token findToken(String s) {
         if (Keyword.set.contains(s.toUpperCase()))
             return new Token.Keyword(s.toUpperCase());
+        if (Operator.set.contains(s))
+            return new Token.Operator(s.toUpperCase());
         if (Char.set.contains(s))
             return new Token.Char(s.toUpperCase());
         if (NumericString.instancePattern.matcher(s).matches())
@@ -252,30 +277,34 @@ public abstract class Token {
         Token.Keyword.set = ImmutableSet.of();
     }
 
-    protected static void init(Class thisClass) {
-        Field fields[] = thisClass.getDeclaredFields();
+    protected static void init(Class<?> thisClass) {
+        Field[] fields = thisClass.getDeclaredFields();
         ImmutableSet.Builder<String> charBuilder = ImmutableSet.builder();
         ImmutableSet.Builder<String> keywordBuilder = ImmutableSet.builder();
+        ImmutableSet.Builder<String> operatorBuilder = ImmutableSet.builder();
         for (Field f : fields) {
-            if (f.getType().equals((Predicate.class)) && f.getAnnotation(CharToken.class) != null) {
-                try {
-                    //noinspection unchecked
-                    tokenMap.put((Predicate<Token>) f.get(null), f.getName());
-                    charBuilder.add(f.getName());
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
-            } else if (f.getType().equals((Predicate.class)) && f.getAnnotation(KeywordToken.class) != null) {
-                try {
-                    //noinspection unchecked
-                    tokenMap.put((Predicate<Token>) f.get(null), f.getName());
-                    keywordBuilder.add(f.getName());
-                } catch (IllegalAccessException e) {
-                    e.printStackTrace();
-                }
+            Object o;
+            try {
+                o = f.get(null);
+            } catch (IllegalAccessException e) {
+                throw new RuntimeException(e);
+            }
+            if (o instanceof Char) {
+                Char aChar = (Char) o;
+                tokenMap.put(aChar.getPredicate(), aChar.getValue());
+                charBuilder.add(aChar.getValue());
+            } else if (o instanceof Keyword) {
+                Keyword keyword = (Keyword) o;
+                tokenMap.put(keyword.getPredicate(), keyword.getValue());
+                keywordBuilder.add(keyword.getValue());
+            } else if (o instanceof Operator) {
+                Operator operator = (Operator) o;
+                tokenMap.put(operator.getPredicate(), operator.getValue());
+                operatorBuilder.add(operator.getValue());
             }
         }
         Token.Char.set = charBuilder.build();
         Keyword.set = keywordBuilder.build();
+        Operator.set = operatorBuilder.build();
     }
 }

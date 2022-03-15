@@ -67,6 +67,21 @@ public abstract class Parser {
         list.add(new State(state, predicate, nextState, action));
     }
 
+    protected void addState(int state, Token token, int nextState, ParserAction action) {
+            if (stateList.size() < state + 1) {
+                if (stateList.size() < state + 1)
+                    for (int i=0; i<state + 1; i++)
+                        stateList.add(null);
+                List<State> list = new ArrayList<>();
+                stateList.set(state, list);
+            }
+            List<State> list = stateList.get(state);
+            if (list == null) {
+                list = new ArrayList<>();
+                stateList.set(state, list);
+            }
+            list.add(new State(state, token.getPredicate(), nextState, action));
+        }
     abstract protected void init();
 
     protected Parser() {

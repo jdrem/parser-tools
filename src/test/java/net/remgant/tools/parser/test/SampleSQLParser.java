@@ -29,14 +29,14 @@ import static net.remgant.tools.parser.test.SampleSQLParser.SQLToken.*;
 
 public class SampleSQLParser extends Parser {
     public static class SQLToken extends Token {
-        @KeywordToken
-        final public static Predicate<Token> SELECT = (t) -> t.getValue().equalsIgnoreCase("SELECT");
-        @KeywordToken
-        final public static Predicate<Token> FROM = (t) -> t.getValue().equalsIgnoreCase("FROM");
-        @CharToken
-        final public static Predicate<Token> STAR = (t) -> t.getValue().equalsIgnoreCase("*");
-        @CharToken
-        final public static Predicate<Token> COMMA = (t) -> t.getValue().equalsIgnoreCase(",");
+     @KeywordToken
+     final public static Token SELECT =  new Keyword("SELECT");
+     @KeywordToken
+     final public static Token FROM =  new Keyword("FROM");
+     @CharToken
+     final public static Token STAR = new Char("*");
+     @CharToken
+     final public static Token COMMA = new Char(",");
 
         static {
             init(SQLToken.class);
