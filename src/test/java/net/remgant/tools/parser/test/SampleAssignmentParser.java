@@ -19,8 +19,6 @@ package net.remgant.tools.parser.test;
 import com.google.common.collect.ImmutableSet;
 import net.remgant.tools.parser.*;
 
-import java.util.function.Predicate;
-
 import static net.remgant.tools.parser.test.SampleAssignmentParser.SampleToken.EQUALS;
 import static net.remgant.tools.parser.test.SampleAssignmentParser.SampleToken.SEMI_COLON;
 
@@ -39,7 +37,7 @@ public class SampleAssignmentParser extends Parser {
         }
     }
 
-    private ExpressionParser expressionParser = new ExpressionParser(ImmutableSet.of("and", "or"),
+    private final ExpressionParser expressionParser = new ExpressionParser(ImmutableSet.of("and", "or"),
             ImmutableSet.of("<", ">", "<=", ">=", "==", "!="),
             ImmutableSet.of("+", "-"),
             ImmutableSet.of("*", "/", "%"));
@@ -52,7 +50,7 @@ public class SampleAssignmentParser extends Parser {
             AssignmentStatement as = (AssignmentStatement) c;
             ParserResult result = null;
             try {
-                result = expressionParser.parse(lexer, ImmutableSet.of(SEMI_COLON), "");
+                result = expressionParser.parse(tokenIterator, ImmutableSet.of(SEMI_COLON), "");
             } catch (Exception e) {
                 as.setError(e.getCause());
             }
@@ -65,7 +63,7 @@ public class SampleAssignmentParser extends Parser {
 
 
     public SampleAssignmentParser() {
-        lexerSpecialChars = ImmutableSet.of('+', '-', '=', ';', '(', ')');
+        super(ImmutableSet.of('+', '-', '=', ';', '(', ')'));
     }
 
     private static class AssignmentStatement extends ParserResult {

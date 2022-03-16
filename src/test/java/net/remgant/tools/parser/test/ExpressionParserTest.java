@@ -24,6 +24,7 @@ import net.remgant.tools.parser.Token;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ListIterator;
 import java.util.function.Predicate;
 
 import static junit.framework.TestCase.assertTrue;
@@ -57,66 +58,73 @@ public class ExpressionParserTest {
 
     @Test
     public void testAddition() throws Exception {
-        Lexer lexer = new Lexer(ImmutableSet.of(';', ')'), "a + b;");
-        ParserResult result = expressionParser.parse(lexer, ImmutableSet.of(TestToken.SEMI_COLON, TestToken.RIGHT_PAREN));
+        Lexer lexer = new Lexer(ImmutableSet.of(';', ')'));
+        ListIterator<Token> tokenIterator = lexer.tokenize("a + b;");
+        ParserResult result = expressionParser.parse(tokenIterator, ImmutableSet.of(TestToken.SEMI_COLON, TestToken.RIGHT_PAREN));
         System.out.println(result);
         assertEquals("a b +", result.toString());
-        assertTrue(lexer.hasNext());
-        assertEquals(";", lexer.next().getValue());
+        assertTrue(tokenIterator.hasNext());
+        assertEquals(";", tokenIterator.next().getValue());
     }
 
     @Test
     public void testEndChar() throws Exception {
-        Lexer lexer = new Lexer(ImmutableSet.of(';', ')'), "a + b");
-        ParserResult result = expressionParser.parse(lexer, ImmutableSet.of(TestToken.SEMI_COLON, TestToken.RIGHT_PAREN));
+        Lexer lexer = new Lexer(ImmutableSet.of(';', ')'));
+        ListIterator<Token> tokenIterator = lexer.tokenize("a + b");
+        ParserResult result = expressionParser.parse(tokenIterator, ImmutableSet.of(TestToken.SEMI_COLON, TestToken.RIGHT_PAREN));
         System.out.println(result);
         assertEquals("a b +", result.toString());
-        assertFalse(lexer.hasNext());
+        assertFalse(tokenIterator.hasNext());
     }
 
     @Test
     public void testThreeTermAddition() throws Exception {
-        Lexer lexer = new Lexer(ImmutableSet.of(';', ')'), "a + b + c");
-        ParserResult result = expressionParser.parse(lexer, ImmutableSet.of(TestToken.SEMI_COLON, TestToken.RIGHT_PAREN));
+        Lexer lexer = new Lexer(ImmutableSet.of(';', ')'));
+        ListIterator<Token> tokenIterator = lexer.tokenize("a + b + c");
+        ParserResult result = expressionParser.parse(tokenIterator, ImmutableSet.of(TestToken.SEMI_COLON, TestToken.RIGHT_PAREN));
         System.out.println(result);
         assertEquals("a b + c +", result.toString());
-        assertFalse(lexer.hasNext());
+        assertFalse(tokenIterator.hasNext());
     }
 
     @Test
     public void testFourTermMultAdd() throws Exception {
-        Lexer lexer = new Lexer(ImmutableSet.of(';', ')'), "a * b + c * d)");
-        ParserResult result = expressionParser.parse(lexer, ImmutableSet.of(TestToken.SEMI_COLON, TestToken.RIGHT_PAREN));
+        Lexer lexer = new Lexer(ImmutableSet.of(';', ')'));
+        ListIterator<Token> tokenIterator = lexer.tokenize("a * b + c * d)");
+        ParserResult result = expressionParser.parse(tokenIterator, ImmutableSet.of(TestToken.SEMI_COLON, TestToken.RIGHT_PAREN));
         System.out.println(result);
         assertEquals("a b * c d * +", result.toString());
-        assertTrue(lexer.hasNext());
-        assertEquals(")", lexer.next().getValue());
+        assertTrue(tokenIterator.hasNext());
+        assertEquals(")", tokenIterator.next().getValue());
     }
 
     @Test
     public void testWithParen() throws Exception {
-        Lexer lexer = new Lexer(ImmutableSet.of(';', '(', ')'), "a * (b * c)");
-        ParserResult result = expressionParser.parse(lexer, ImmutableSet.of(TestToken.SEMI_COLON));
+        Lexer lexer = new Lexer(ImmutableSet.of(';', '(', ')'));
+        ListIterator<Token> tokenIterator = lexer.tokenize("a * (b * c)");
+        ParserResult result = expressionParser.parse(tokenIterator, ImmutableSet.of(TestToken.SEMI_COLON));
         System.out.println(result);
         assertEquals("a b c * *", result.toString());
-        assertFalse(lexer.hasNext());
+        assertFalse(tokenIterator.hasNext());
     }
 
     @Test
     public void testAllLevels() throws Exception {
-        Lexer lexer = new Lexer(ImmutableSet.of(';', '(', ')'), "a * b + c * d > e * f  + g * h and i * j <= k + l");
-        ParserResult result = expressionParser.parse(lexer, ImmutableSet.of(TestToken.SEMI_COLON));
+        Lexer lexer = new Lexer(ImmutableSet.of(';', '(', ')'));
+        ListIterator<Token> tokenIterator = lexer.tokenize("a * b + c * d > e * f  + g * h and i * j <= k + l");
+        ParserResult result = expressionParser.parse(tokenIterator, ImmutableSet.of(TestToken.SEMI_COLON));
         System.out.println(result);
         assertEquals("a b * c d * + e f * g h * + > i j * k l + <= and", result.toString());
-        assertFalse(lexer.hasNext());
+        assertFalse(tokenIterator.hasNext());
     }
 
     @Test
     public void testEmptyExpression() throws Exception {
-        Lexer lexer = new Lexer(ImmutableSet.of(';', '(', ')'), ";");
-        ParserResult result = expressionParser.parse(lexer, ImmutableSet.of(TestToken.SEMI_COLON));
+        Lexer lexer = new Lexer(ImmutableSet.of(';', '(', ')'));
+        ListIterator<Token> tokenIterator = lexer.tokenize(";");
+        ParserResult result = expressionParser.parse(tokenIterator, ImmutableSet.of(TestToken.SEMI_COLON));
         System.out.println(result);
         assertEquals("", result.toString());
-        assertTrue(lexer.hasNext());
+        assertTrue(tokenIterator.hasNext());
     }
 }
