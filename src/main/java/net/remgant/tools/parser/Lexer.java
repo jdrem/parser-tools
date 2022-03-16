@@ -30,13 +30,20 @@ import java.util.Set;
 public class Lexer implements ListIterator<Token> {
     private Set<Character> specialChars;
     protected List<Token> list;
+    private Token.TokenFinder tokenFinder;
+    public final static Set<Character> defaultSpecialChars =  ImmutableSet.of(',', '.', '(', ')', '?', '{', '}');
 
     public Lexer(String source) {
-        this(ImmutableSet.of(',', '.', '(', ')', '?', '{', '}'), source);
+        this(source, defaultSpecialChars, Token.defaultTokenFinder);
     }
 
     public Lexer(Set<Character> specialChars, String source) {
+        this(source, specialChars, Token.defaultTokenFinder);
+    }
+
+    public Lexer(String source, Set<Character> specialChars, Token.TokenFinder tokenFinder) {
         this.specialChars = specialChars;
+        this.tokenFinder = tokenFinder;
         try {
             tokenize(source);
         } catch (IOException e) {
@@ -45,9 +52,19 @@ public class Lexer implements ListIterator<Token> {
     }
 
     public Lexer(Iterable<String> stringListIterator) {
-        tokenize(stringListIterator);
+        this(stringListIterator, defaultSpecialChars, Token.defaultTokenFinder);
     }
 
+    public Lexer(Iterable<String> stringIterator, Token.TokenFinder tokenFinder) {
+        this(stringIterator, defaultSpecialChars, tokenFinder);
+    }
+
+    public Lexer(Iterable<String> stringIterator, Set<Character> specialChars, Token.TokenFinder tokenFinder) {
+        this.specialChars = specialChars;
+        this.tokenFinder = tokenFinder;
+        tokenize(stringIterator);
+    }
+    
     ListIterator<Token> listIterator;
 
     @Override
@@ -124,7 +141,7 @@ public class Lexer implements ListIterator<Token> {
             char c = (char) i;
             if (!inSingleQuote && !inDoubleQuote && !inNumber && Character.isWhitespace(c)) {
                 if (sb.length() > 0) {
-                    list.add(Token.findToken(sb.toString()));
+                    list.add(tokenFinder.findToken(sb.toString()));
                     sb.setLength(0);
                 }
                 continue;
@@ -136,7 +153,7 @@ public class Lexer implements ListIterator<Token> {
             }
             if (c == '\'' && inSingleQuote) {
                 sb.append(c);
-                list.add(Token.findToken(sb.toString()));
+                list.add(tokenFinder.findToken(sb.toString()));
                 sb.setLength(0);
                 inSingleQuote = false;
                 continue;
@@ -164,14 +181,14 @@ public class Lexer implements ListIterator<Token> {
             }
             if (c == '\"') {
                 sb.append(c);
-                list.add(Token.findToken(sb.toString()));
+                list.add(tokenFinder.findToken(sb.toString()));
                 sb.setLength(0);
                 inDoubleQuote = false;
                 continue;
             }
             if (!inNumber && Character.isDigit(c)) {
                 if (sb.length() > 0)
-                    list.add(Token.findToken(sb.toString()));
+                    list.add(tokenFinder.findToken(sb.toString()));
                 inNumber = true;
                 sb.setLength(0);
                 sb.append(c);
@@ -182,7 +199,7 @@ public class Lexer implements ListIterator<Token> {
                 continue;
             }
             if (inNumber && !Character.isDigit(c) && c != '.') {
-                list.add(Token.findToken(sb.toString()));
+                list.add(tokenFinder.findToken(sb.toString()));
                 sb.setLength(0);
                 inNumber = false;
                 in.unread(c);
@@ -190,8 +207,8 @@ public class Lexer implements ListIterator<Token> {
             }
             if (specialChars.contains(c)) {
                 if (sb.length() > 0)
-                    list.add(Token.findToken(sb.toString()));
-                list.add(Token.findToken(Character.toString(c)));
+                    list.add(tokenFinder.findToken(sb.toString()));
+                list.add(tokenFinder.findToken(Character.toString(c)));
                 sb.setLength(0);
                 continue;
             }
@@ -199,12 +216,12 @@ public class Lexer implements ListIterator<Token> {
 
         }
         if (sb.length() > 0)
-            list.add(Token.findToken(sb.toString()));
+            list.add(tokenFinder.findToken(sb.toString()));
     }
 
 
     private void tokenize(Iterable<String> strings) {
         list = new ArrayList<>();
-        strings.forEach(s -> list.add(Token.findToken(s)));
+        strings.forEach(s -> list.add(tokenFinder.findToken(s)));
     }
 }

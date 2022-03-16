@@ -21,15 +21,18 @@ import net.remgant.tools.parser.*;
 
 import java.util.function.Predicate;
 
-import static net.remgant.tools.parser.test.SampleAssignmentParser.SampleToken.*;
+import static net.remgant.tools.parser.test.SampleAssignmentParser.SampleToken.EQUALS;
+import static net.remgant.tools.parser.test.SampleAssignmentParser.SampleToken.SEMI_COLON;
 
 public class SampleAssignmentParser extends Parser {
-    
+
     public static class SampleToken extends Token {
         @CharToken
-        final public static Predicate<Token> EQUALS = (t) -> t.getValue().equalsIgnoreCase("=");
+        final public static Token EQUALS = new Char("=");
         @CharToken
-        final public static Predicate<Token> SEMI_COLON = (t) -> t.getValue().equalsIgnoreCase(";");
+        final public static Token SEMI_COLON = new Char(";");
+        @OperatorToken
+        final public static Token PLUS_SIGN = new Operator("+");
 
         static {
             init(SampleToken.class);
@@ -49,7 +52,7 @@ public class SampleAssignmentParser extends Parser {
             AssignmentStatement as = (AssignmentStatement) c;
             ParserResult result = null;
             try {
-                result = expressionParser.parse(lexer, ImmutableSet.of(SEMI_COLON));
+                result = expressionParser.parse(lexer, ImmutableSet.of(SEMI_COLON), "");
             } catch (Exception e) {
                 as.setError(e.getCause());
             }

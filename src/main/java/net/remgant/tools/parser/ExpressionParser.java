@@ -20,6 +20,7 @@ import java.util.ListIterator;
 import java.util.Set;
 import java.util.Stack;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class ExpressionParser {
 
@@ -45,6 +46,15 @@ public class ExpressionParser {
             return new Expression();
         return expressionStack.pop();
     }
+
+    public ParserResult parse(ListIterator<Token> source, Set<Token> endTokens, String s) throws Exception {
+          this.endTokens = endTokens.stream().map(t -> t.getPredicate()).collect(Collectors.toSet());
+          expressionStack = new Stack<>();
+          expression(source);
+          if (expressionStack.empty())
+              return new Expression();
+          return expressionStack.pop();
+      }
 
     private boolean match(Token token) {
         return endTokens.stream().anyMatch(p -> p.test(token));

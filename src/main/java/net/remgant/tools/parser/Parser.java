@@ -34,6 +34,7 @@ public abstract class Parser {
     protected Set<Character> lexerSpecialChars;
     @SuppressWarnings("WeakerAccess")
     protected Set<Integer> terminalStates = ImmutableSet.of();
+    protected Token.TokenFinder tokenFinder;
 
     static class State {
         int stateNumber;
@@ -67,11 +68,39 @@ public abstract class Parser {
         list.add(new State(state, predicate, nextState, action));
     }
 
+    protected void addState(int state, Token token, int nextState, ParserAction action) {
+            if (stateList.size() < state + 1) {
+                if (stateList.size() < state + 1)
+                    for (int i=0; i<state + 1; i++)
+                        stateList.add(null);
+                List<State> list = new ArrayList<>();
+                stateList.set(state, list);
+            }
+            List<State> list = stateList.get(state);
+            if (list == null) {
+                list = new ArrayList<>();
+                stateList.set(state, list);
+            }
+        list.add(new State(state, token.getPredicate(), nextState, action));
+    }
+
     abstract protected void init();
 
     protected Parser() {
+        this(Lexer.defaultSpecialChars);
+    }
+
+    protected Parser(Set<Character> lexicalSpecialChars) {
+        this.lexerSpecialChars = lexicalSpecialChars;
         stateList = new ArrayList<>();
         init();
+        Class<?>[] declaredClasses = this.getClass().getDeclaredClasses();
+        for (Class<?> aClass : declaredClasses) {
+            if (Token.class.isAssignableFrom(aClass)) {
+                tokenFinder = Token.createTokenFinderFromClass((Class<Token>) aClass);
+                break;
+            }
+        }
     }
 
     public void printStateDiagram(@SuppressWarnings("SameParameterValue") PrintStream out) {
@@ -94,11 +123,11 @@ public abstract class Parser {
     }
     
     public ParserResult parse(String source) throws ParserException {
-//        Lexer lexer;
         if (lexerSpecialChars == null)
-            lexer = new Lexer(source);
-        else
-            lexer = new Lexer(lexerSpecialChars, source);
+            lexerSpecialChars = Lexer.defaultSpecialChars;
+        if (tokenFinder == null)
+            tokenFinder = Token.defaultTokenFinder;
+        lexer = new Lexer(source, lexerSpecialChars, tokenFinder);
         int state = 0;
         int r;
         ParserResult parserResult = resultInitializer();
