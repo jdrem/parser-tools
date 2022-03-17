@@ -32,17 +32,14 @@ public class ExpressionBuilderSampleParser extends Parser {
         }
     }
 
-    private ExpressionParser expressionParser = new ExpressionParser(ImmutableSet.of("and", "or"),
+    private final ExpressionParser expressionParser = new ExpressionParser(ImmutableSet.of("and", "or"),
             ImmutableSet.of("<", ">", "<=", ">=", "==", "!="),
             ImmutableSet.of("+", "-"),
             ImmutableSet.of("*", "/", "%"));
 
     @Override
     protected void init() {
-        addState(0, Token.Identifier.INSTANCE, 1, (s, c) -> {
-            ParserResult r = new ExpressionBuilderSampleParser.AssignmentStatement(s);
-            return r;
-        });
+        addState(0, Token.Identifier.INSTANCE, 1, (s, c) -> new AssignmentStatement(s));
 
         addState(1, EQUALS, 2, null);
 
@@ -69,7 +66,7 @@ public class ExpressionBuilderSampleParser extends Parser {
 
 
     public ExpressionBuilderSampleParser() {
-        lexerSpecialChars = ImmutableSet.of('+', '-', '=', ';', '(', ')');
+        super(ImmutableSet.of('+', '-', '=', ';', '(', ')'));
     }
 
      static class AssignmentStatement extends ParserResult {

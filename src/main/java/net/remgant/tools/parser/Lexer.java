@@ -16,212 +16,136 @@
  */
 package net.remgant.tools.parser;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 
 import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
-public class Lexer implements ListIterator<Token> {
-    private Set<Character> specialChars;
-    protected List<Token> list;
-    private Token.TokenFinder tokenFinder;
-    public final static Set<Character> defaultSpecialChars =  ImmutableSet.of(',', '.', '(', ')', '?', '{', '}');
+public class Lexer {
+    private final Set<Character> specialChars;
+    private final Token.TokenFinder tokenFinder;
 
-    public Lexer(String source) {
-        this(source, defaultSpecialChars, Token.defaultTokenFinder);
+    public final static Set<Character> defaultSpecialChars = ImmutableSet.of(',', '.', '(', ')', '?', '{', '}');
+
+    public Lexer() {
+        this(defaultSpecialChars, Token.defaultTokenFinder);
     }
 
-    public Lexer(Set<Character> specialChars, String source) {
-        this(source, specialChars, Token.defaultTokenFinder);
+    public Lexer(Set<Character> specialChars) {
+        this(specialChars, Token.defaultTokenFinder);
     }
 
-    public Lexer(String source, Set<Character> specialChars, Token.TokenFinder tokenFinder) {
+    public Lexer(Token.TokenFinder tokenFinder) {
+        this(defaultSpecialChars, tokenFinder);
+    }
+
+    public Lexer(Set<Character> specialChars, Token.TokenFinder tokenFinder) {
         this.specialChars = specialChars;
         this.tokenFinder = tokenFinder;
-        try {
-            tokenize(source);
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
     }
 
-    public Lexer(Iterable<String> stringListIterator) {
-        this(stringListIterator, defaultSpecialChars, Token.defaultTokenFinder);
-    }
-
-    public Lexer(Iterable<String> stringIterator, Token.TokenFinder tokenFinder) {
-        this(stringIterator, defaultSpecialChars, tokenFinder);
-    }
-
-    public Lexer(Iterable<String> stringIterator, Set<Character> specialChars, Token.TokenFinder tokenFinder) {
-        this.specialChars = specialChars;
-        this.tokenFinder = tokenFinder;
-        tokenize(stringIterator);
-    }
-    
-    ListIterator<Token> listIterator;
-
-    @Override
-    public boolean hasNext() {
-        if (listIterator == null)
-            listIterator = list.listIterator();
-        return listIterator.hasNext();
-    }
-
-    @Override
-    public Token next() {
-        if (listIterator == null)
-            listIterator = list.listIterator();
-        return listIterator.next();
-    }
-
-    @Override
-    public boolean hasPrevious() {
-        if (listIterator == null)
-            listIterator = list.listIterator();
-        return listIterator.hasPrevious();
-    }
-
-    @Override
-    public Token previous() {
-        if (listIterator == null)
-            listIterator = list.listIterator();
-        return listIterator.previous();
-    }
-
-    @Override
-    public int nextIndex() {
-        if (listIterator == null)
-            listIterator = list.listIterator();
-        return listIterator.nextIndex();
-    }
-
-    @Override
-    public int previousIndex() {
-        if (listIterator == null)
-            listIterator = list.listIterator();
-        return listIterator.previousIndex();
-    }
-
-    @Override
-    public void remove() {
-        throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void set(Token token) {
-        throw new UnsupportedOperationException();
-
-    }
-
-    @Override
-    public void add(Token token) {
-        throw new UnsupportedOperationException();
-    }
-
-    public void pushBack(Token t) {
-        list.add(0, t);
-    }
-
-    private void tokenize(final String source) throws IOException {
-        list = new ArrayList<>();
+    public ListIterator<Token> tokenize(final String source) {
+        ImmutableList.Builder<Token> builder = ImmutableList.builder();
         boolean inSingleQuote = false;
         boolean inDoubleQuote = false;
         boolean inNumber = false;
-        PushbackReader in = new PushbackReader(new StringReader(source));
-        int i;
         StringBuilder sb = new StringBuilder();
-        while ((i = in.read()) != -1) {
-            char c = (char) i;
-            if (!inSingleQuote && !inDoubleQuote && !inNumber && Character.isWhitespace(c)) {
-                if (sb.length() > 0) {
-                    list.add(tokenFinder.findToken(sb.toString()));
-                    sb.setLength(0);
+        try (PushbackReader in = new PushbackReader(new StringReader(source))) {
+            int i;
+            while ((i = in.read()) != -1) {
+                char c = (char) i;
+                if (!inSingleQuote && !inDoubleQuote && !inNumber && Character.isWhitespace(c)) {
+                    if (sb.length() > 0) {
+                        builder.add(tokenFinder.findToken(sb.toString()));
+                        sb.setLength(0);
+                    }
+                    continue;
                 }
-                continue;
-            }
-            if (c == '\'' && !inSingleQuote && !inDoubleQuote) {
-                inSingleQuote = true;
+                if (c == '\'' && !inSingleQuote && !inDoubleQuote) {
+                    inSingleQuote = true;
+                    sb.append(c);
+                    continue;
+                }
+                if (c == '\'' && inSingleQuote) {
+                    sb.append(c);
+                    builder.add(tokenFinder.findToken(sb.toString()));
+                    sb.setLength(0);
+                    inSingleQuote = false;
+                    continue;
+                }
+                if (inSingleQuote && c == '\\') {
+                    sb.append(c);
+                    i = in.read();
+                    sb.append((char) i);
+                    continue;
+                }
+                if (inSingleQuote) {
+                    sb.append(c);
+                    continue;
+                }
+                if (inDoubleQuote && c == '\\') {
+                    sb.append(c);
+                    i = in.read();
+                    sb.append((char) i);
+                    continue;
+                }
+                if (c == '\"' && !inDoubleQuote) {
+                    sb.append(c);
+                    inDoubleQuote = true;
+                    continue;
+                }
+                if (c == '\"') {
+                    sb.append(c);
+                    builder.add(tokenFinder.findToken(sb.toString()));
+                    sb.setLength(0);
+                    inDoubleQuote = false;
+                    continue;
+                }
+                if (!inNumber && Character.isDigit(c)) {
+                    if (sb.length() > 0)
+                        builder.add(tokenFinder.findToken(sb.toString()));
+                    inNumber = true;
+                    sb.setLength(0);
+                    sb.append(c);
+                    continue;
+                }
+                if (inNumber && c == '.') {
+                    sb.append(c);
+                    continue;
+                }
+                if (inNumber && !Character.isDigit(c) && c != '.') {
+                    builder.add(tokenFinder.findToken(sb.toString()));
+                    sb.setLength(0);
+                    inNumber = false;
+                    in.unread(c);
+                    continue;
+                }
+                if (specialChars.contains(c)) {
+                    if (sb.length() > 0)
+                        builder.add(tokenFinder.findToken(sb.toString()));
+                    builder.add(tokenFinder.findToken(Character.toString(c)));
+                    sb.setLength(0);
+                    continue;
+                }
                 sb.append(c);
-                continue;
-            }
-            if (c == '\'' && inSingleQuote) {
-                sb.append(c);
-                list.add(tokenFinder.findToken(sb.toString()));
-                sb.setLength(0);
-                inSingleQuote = false;
-                continue;
-            }
-            if (inSingleQuote && c == '\\') {
-                sb.append(c);
-                i = in.read();
-                sb.append((char) i);
-                continue;
-            }
-            if (inSingleQuote) {
-                sb.append(c);
-                continue;
-            }
-            if (inDoubleQuote && c == '\\') {
-                sb.append(c);
-                i = in.read();
-                sb.append((char) i);
-                continue;
-            }
-            if (c == '\"' && !inDoubleQuote) {
-                sb.append(c);
-                inDoubleQuote = true;
-                continue;
-            }
-            if (c == '\"') {
-                sb.append(c);
-                list.add(tokenFinder.findToken(sb.toString()));
-                sb.setLength(0);
-                inDoubleQuote = false;
-                continue;
-            }
-            if (!inNumber && Character.isDigit(c)) {
-                if (sb.length() > 0)
-                    list.add(tokenFinder.findToken(sb.toString()));
-                inNumber = true;
-                sb.setLength(0);
-                sb.append(c);
-                continue;
-            }
-            if (inNumber && c == '.') {
-                sb.append(c);
-                continue;
-            }
-            if (inNumber && !Character.isDigit(c) && c != '.') {
-                list.add(tokenFinder.findToken(sb.toString()));
-                sb.setLength(0);
-                inNumber = false;
-                in.unread(c);
-                continue;
-            }
-            if (specialChars.contains(c)) {
-                if (sb.length() > 0)
-                    list.add(tokenFinder.findToken(sb.toString()));
-                list.add(tokenFinder.findToken(Character.toString(c)));
-                sb.setLength(0);
-                continue;
-            }
-            sb.append(c);
 
+            }
+        } catch (IOException ioe) {
+            throw new UncheckedIOException(ioe);
         }
         if (sb.length() > 0)
-            list.add(tokenFinder.findToken(sb.toString()));
+            builder.add(tokenFinder.findToken(sb.toString()));
+        return builder.build().listIterator();
     }
 
-
-    private void tokenize(Iterable<String> strings) {
-        list = new ArrayList<>();
-        strings.forEach(s -> list.add(tokenFinder.findToken(s)));
+    public ListIterator<Token> tokenize(Iterable<String> strings) {
+        ImmutableList.Builder<Token> builder = ImmutableList.builder();
+        strings.forEach(s -> builder.add(tokenFinder.findToken(s)));
+        return builder.build().listIterator();
     }
 }

@@ -71,8 +71,7 @@ public class SampleSQLParser extends Parser {
     }
 
     SampleSQLParser() {
-        super();
-        lexerSpecialChars = ImmutableSet.of('*', ',');
+        super(ImmutableSet.of('*', ','));
         init();
     }
 
@@ -127,7 +126,7 @@ public class SampleSQLParser extends Parser {
         });
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         new SampleSQLParser().printStateDiagram(System.out);
     }
 }

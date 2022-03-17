@@ -22,19 +22,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.PrintStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 public abstract class Parser {
     final private Logger log = LoggerFactory.getLogger(Parser.class);
 
     protected Lexer lexer;
-    protected Set<Character> lexerSpecialChars;
-    @SuppressWarnings("WeakerAccess")
     protected Set<Integer> terminalStates = ImmutableSet.of();
     protected Token.TokenFinder tokenFinder;
+    protected ListIterator<Token> tokenIterator;
 
     static class State {
         int stateNumber;
@@ -50,7 +47,7 @@ public abstract class Parser {
         }
     }
 
-    private List<List<State>> stateList;
+    private final List<List<State>> stateList;
 
     protected void addState(int state, Predicate<Token> predicate, int nextState, ParserAction action) {
         if (stateList.size() < state + 1) {
@@ -91,16 +88,17 @@ public abstract class Parser {
     }
 
     protected Parser(Set<Character> lexicalSpecialChars) {
-        this.lexerSpecialChars = lexicalSpecialChars;
-        stateList = new ArrayList<>();
+        this.stateList = new ArrayList<>();
         init();
         Class<?>[] declaredClasses = this.getClass().getDeclaredClasses();
         for (Class<?> aClass : declaredClasses) {
             if (Token.class.isAssignableFrom(aClass)) {
-                tokenFinder = Token.createTokenFinderFromClass((Class<Token>) aClass);
+                //noinspection unchecked
+                this.tokenFinder = Token.createTokenFinderFromClass((Class<Token>) aClass);
                 break;
             }
         }
+        this.lexer = new Lexer(lexicalSpecialChars, this.tokenFinder != null ? this.tokenFinder : Token.defaultTokenFinder);
     }
 
     public void printStateDiagram(@SuppressWarnings("SameParameterValue") PrintStream out) {
@@ -123,17 +121,13 @@ public abstract class Parser {
     }
     
     public ParserResult parse(String source) throws ParserException {
-        if (lexerSpecialChars == null)
-            lexerSpecialChars = Lexer.defaultSpecialChars;
-        if (tokenFinder == null)
-            tokenFinder = Token.defaultTokenFinder;
-        lexer = new Lexer(source, lexerSpecialChars, tokenFinder);
         int state = 0;
         int r;
         ParserResult parserResult = resultInitializer();
         Token token;
-        while (lexer.hasNext()) {
-            token = lexer.next();
+        tokenIterator= lexer.tokenize(source);
+        while (tokenIterator.hasNext()) {
+            token = tokenIterator.next();
             log.trace(String.format("token=%s, state=%s", token, state));
             if (state < 0)
                 throw new NoStateForTokenException(token.getValue());
