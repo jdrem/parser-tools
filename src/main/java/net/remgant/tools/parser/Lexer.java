@@ -23,7 +23,6 @@ import java.io.IOException;
 import java.io.PushbackReader;
 import java.io.StringReader;
 import java.io.UncheckedIOException;
-import java.util.List;
 import java.util.ListIterator;
 import java.util.Set;
 
@@ -31,7 +30,6 @@ public class Lexer {
     private final Set<Character> specialChars;
     private final Token.TokenFinder tokenFinder;
 
-    protected List<Token> list;
     public final static Set<Character> defaultSpecialChars = ImmutableSet.of(',', '.', '(', ')', '?', '{', '}');
 
     public Lexer() {
@@ -49,10 +47,6 @@ public class Lexer {
     public Lexer(Set<Character> specialChars, Token.TokenFinder tokenFinder) {
         this.specialChars = specialChars;
         this.tokenFinder = tokenFinder;
-    }
-
-    public void pushBack(Token t) {
-        list.add(0, t);
     }
 
     public ListIterator<Token> tokenize(final String source) {
