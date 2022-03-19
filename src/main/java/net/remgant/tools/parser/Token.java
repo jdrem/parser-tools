@@ -19,58 +19,21 @@ package net.remgant.tools.parser;
 import com.google.common.base.Objects;
 import com.google.common.collect.ImmutableSet;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * A class for specifying and handling tokens.
+ */
 public abstract class Token {
-    /**
-     * @deprecated Will be removed in 2.0.0
-     */
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
-    @Deprecated
-    protected @interface KeywordToken {
-    }
 
-    /**
-     * @deprecated Will be removed in 2.0.0
-     */
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
-    @Deprecated
-    protected @interface CharToken {
-    }
-
-    /**
-     * @deprecated Will be removed in 2.0.0
-     */
-    @Retention(RetentionPolicy.RUNTIME)
-    @Target(ElementType.FIELD)
-    @Deprecated
-    protected @interface OperatorToken {
-    }
-
-    public static final Predicate<Token> MATCH_ANY = (t) -> true;
-
-    protected static Map<Predicate<Token>, String> tokenMap = new HashMap<>();
-
-    static {
-        tokenMap.put(MATCH_ANY, "MATCH_ANY");
-    }
-
-    String value;
-    Predicate<Token> predicate;
+    protected String value;
+    protected Predicate<Token> predicate;
 
     public String getValue() {
         return value;
@@ -80,7 +43,7 @@ public abstract class Token {
         return predicate;
     }
 
-    Token(String v) {
+    protected Token(String v) {
         this.value = v;
         this.predicate = t -> t.getValue().equalsIgnoreCase(v);
     }
@@ -112,39 +75,61 @@ public abstract class Token {
         return Objects.hashCode(value);
     }
 
-    public static class Keyword extends Token {
-        static Set<String> set;
+    // Some nested classes for some basic token types
 
+    /**
+     * A Token that represents a Keyword.
+     */
+    public static class Keyword extends Token {
         public Keyword(String value) {
             super(value);
         }
     }
 
+    /**
+     * A Token that is a single character.
+     */
     public static class Char extends Token {
-        static Set<String> set;
-
-        public Char(String v) {
-            super(v);
+        public Char(String value) {
+            super(value);
         }
     }
 
+    /**
+     * A Token that represents an operator in an expression.
+     */
     public static class Operator extends Token {
-        static Set<String> set;
-
-        public Operator(String v) {
-            super(v);
+        public Operator(String value) {
+            super(value);
         }
     }
 
+    /**
+     * A token that matches anything.
+     */
+    public static final Token MATCH_ANY = new Token() {
+        @Override
+        public Predicate<Token> getPredicate() {
+            return (t) -> true;
+        }
 
+        @Override
+        public String getValue() {
+            return "Token.MATCH_ANY";
+        }
+
+        @Override
+        public String toString() {
+            return "Token.MATCH_ANY";
+        }
+    };
+
+    /**
+     * A token that matches the standard an identifier using the standard Java rules.
+     */
     public static class Identifier extends Token {
         private static final Pattern instancePattern = Pattern.compile("\\p{Alpha}\\w*");
-        public static final Predicate<Token> INSTANCE = (t) -> instancePattern.matcher(t.value).matches();
-        public static final Identifier INSTANCE_ = new Identifier("Identifier.INSTANCE", (t) -> instancePattern.matcher(t.value).matches());
-
-        static {
-            tokenMap.put(INSTANCE, "Identifier.INSTANCE");
-        }
+        public static final Identifier INSTANCE = new Identifier("Identifier.INSTANCE", (t) -> instancePattern.matcher(t.value).matches());
 
         private Identifier(String v, Predicate<Token> predicate) {
             super(v, predicate);
@@ -167,14 +152,12 @@ public abstract class Token {
         }
     }
 
+    /**
+     * A Token that represents a quoted character strinng.
+     */
     public static class CharString extends Token {
         private final static Pattern instancePattern = Pattern.compile("((?<![\\\\])[\'\"])((?:.(?!(?<![\\\\])\\1))*.?)\\1");
-        public final static Predicate<Token> INSTANCE = (t) -> instancePattern.matcher(t.value).matches();
-        public final static Token INSTANCE_ = new CharString("CharString.INSTNANCE", INSTANCE);
-
-        static {
-            tokenMap.put(INSTANCE, "CharString.INSTANCE");
-        }
+        public final static Token INSTANCE = new CharString("CharString.INSTNANCE", (t) -> instancePattern.matcher(t.value).matches());
 
         private CharString(String v, Predicate<Token> predicate) {
             super(v, predicate);
@@ -194,32 +177,30 @@ public abstract class Token {
         }
     }
 
+    /**
+     * A Token that represents a boolean literal.
+     */
     public static class BooleanString extends Token {
         final public static Pattern instancePattern = Pattern.compile("true|false");
-        final public static Predicate<Token> INSTANCE = (t) -> instancePattern.matcher(t.value).matches();
-        final public static Token INSTANCE_ = new BooleanString("BooleanString.INSTANCE", INSTANCE);
+        final public static Token INSTANCE = new BooleanString("BooleanString.INSTANCE", (t) -> instancePattern.matcher(t.value).matches());
 
-        private BooleanString(String v, Predicate<Token> predicate) {
-            super(v, predicate);
+        public BooleanString(String value) {
+            super(value);
         }
-
-        public BooleanString(String v) {
-            super(v, INSTANCE);
+        
+        public BooleanString(String v, Predicate<Token> predicate) {
+            super(v, predicate);
         }
     }
 
+    /**
+     * A Token that represents an integer or real number (but <i>not</i> a number in scientific notation).
+     */
     public static class NumericString extends Token {
         final private static Pattern instancePattern = Pattern.compile("\\p{Digit}+(?:\\.\\p{Digit}+)?");
+        final public static Token INSTANCE = new NumericString("NumnericString.INSTANCE", (t) -> instancePattern.matcher(t.value).matches());
         final private static Pattern anyIntegerPattern = Pattern.compile("\\p{Digit}+");
-        final public static Predicate<Token> INSTANCE = (t) -> instancePattern.matcher(t.value).matches();
-        final public static Predicate<Token> ANY_INTEGER = (t) -> anyIntegerPattern.matcher(t.value).matches();
-        final public static Token INSTANCE_ = new NumericString("NumnericString.INSTANCE", INSTANCE);
-
-        static {
-            tokenMap.put(INSTANCE, "NumericString.INSTANCE");
-            tokenMap.put(ANY_INTEGER, "NumericString.ANY_INTEGER");
-        }
-
+        final public static Token ANY_INTEGER = new NumericString("NumericString.ANY_INTEGER", (t) -> anyIntegerPattern.matcher(t.value).matches());
         private NumericString(String v, Predicate<Token> predicate) {
             super(v, predicate);
         }
@@ -238,19 +219,63 @@ public abstract class Token {
         }
     }
 
+    static private class NegatedToken extends Token {
+        private NegatedToken(Token token) {
+            this.value = "negated("+token.value+")";
+            this.predicate = token.predicate.negate();
+        }
+    }
+
+    static public Token negate(Token token) {
+        return new NegatedToken(token);
+    }
+    
+    /**
+     * A Token that represents a set of other tokens.
+     */
+    static public class TokenSet extends Token {
+        final private Token[] tokens;
+        final private Predicate<Token>[] predicates;
+
+        public TokenSet(Token[] tokens) {
+            this.tokens = tokens;
+            //noinspection unchecked
+            this.predicates = Arrays.stream(tokens).map(Token::getPredicate).toArray(Predicate[]::new);
+        }
+
+        @Override
+        public Predicate<Token> getPredicate() {
+            return (t) -> {
+                for (Predicate<Token> p : predicates)
+                    if (p.test(t))
+                        return true;
+                return false;
+            };
+        }
+
+        public String toString() {
+            return Stream.of(tokens).map(Token::getValue).collect(Collectors.joining("|"));
+        }
+
+        public static TokenSet of(Token... tokens) {
+            return new TokenSet(tokens);
+        }
+    }
+
+    /**
+     * A Token that is represented by a regular expression.
+     */
     public static class Regex extends Token {
         Pattern pattern;
 
-        static public Predicate<Token> of(String s) {
-            Pattern p = Pattern.compile(s);
-            Predicate<Token> predicate = (t) -> p.matcher(t.value).matches();
-            tokenMap.put(predicate, "Regex: " + s);
-            return predicate;
+        static public Token of(String s) {
+           return new Regex(s);
         }
 
-        public Regex(String v) {
-            super(v);
+        private Regex(String v) {
+            this.value = "Regex: " + v;
             pattern = Pattern.compile(v);
+            predicate = (t) -> pattern.matcher(t.value).matches();
         }
 
         @Override
@@ -294,81 +319,6 @@ public abstract class Token {
 
     public static TokenFinder defaultTokenFinder = new TokenFinder();
 
-    @Deprecated
-    public static Token findToken(String s) {
-        if (Keyword.set.contains(s.toUpperCase()))
-            return new Token.Keyword(s.toUpperCase());
-        if (Operator.set.contains(s))
-            return new Token.Operator(s.toUpperCase());
-        if (Char.set.contains(s))
-            return new Token.Char(s.toUpperCase());
-        if (NumericString.instancePattern.matcher(s).matches())
-            return new NumericString(s);
-        if (s.length() >= 2 && (s.charAt(0) == '\'' && s.charAt(s.length() - 1) == '\'' ||
-                s.charAt(0) == '\"' && s.charAt(s.length() - 1) == '\"'))
-            return new CharString(s);
-        return new Identifier(s);
-    }
-
-    static public class TokenSet implements Predicate<Token> {
-        Token[] tokens;
-        Predicate<Token>[] predicates;
-
-        public TokenSet(Predicate<Token>[] predicates) {
-            this.predicates = predicates;
-        }
-
-        public TokenSet(Token[] tokens) {
-            this.tokens = tokens;
-            //noinspection unchecked
-            this.predicates = Arrays.stream(tokens).map(Token::getPredicate).toArray(Predicate[]::new);
-        }
-
-        @Override
-        public boolean test(Token token) {
-            for (Predicate<Token> p : predicates)
-                if (p.test(token))
-                    return true;
-            return false;
-        }
-
-        public String toString() {
-            if (tokens != null) {
-                return Stream.of(tokens).map(Token::getValue).collect(Collectors.joining("|"));
-            }
-            return Stream.of(predicates)
-                    .map(c -> {
-                        if (c.getClass().getName().contains("Identifier"))
-                            return "Identifier";
-                        if (c.getClass().getName().contains("NumericString"))
-                            return "NumericString";
-                        return tokenMap.get(c);
-                    })
-                    .collect(Collectors.joining("|"));
-        }
-
-        @SafeVarargs
-        public static TokenSet of(Predicate<Token>... tokens) {
-            return new TokenSet(tokens);
-        }
-
-        public static TokenSet of(Token... tokens) {
-            return new TokenSet(tokens);
-        }
-    }
-
-    public static Predicate<Token> negate(Predicate<Token> predicate) {
-        Predicate<Token> negated = predicate.negate();
-        tokenMap.put(negated, "negated(" + tokenMap.get(predicate) + ")");
-        return negated;
-    }
-
-    static {
-        Token.Char.set = ImmutableSet.of();
-        Token.Keyword.set = ImmutableSet.of();
-        Token.Operator.set = ImmutableSet.of();
-    }
-
     public static TokenFinder createTokenFinderFromClass(Class<? extends Token> thisClass) {
         Field[] fields = thisClass.getDeclaredFields();
         ImmutableSet.Builder<String> charBuilder = ImmutableSet.builder();
@@ -384,15 +334,12 @@ public abstract class Token {
             }
             if (o instanceof Char) {
                 Char aChar = (Char) o;
-                tokenMap.put(aChar.getPredicate(), aChar.getValue());
                 charBuilder.add(aChar.getValue());
             } else if (o instanceof Keyword) {
                 Keyword keyword = (Keyword) o;
-                tokenMap.put(keyword.getPredicate(), keyword.getValue());
                 keywordBuilder.add(keyword.getValue());
             } else if (o instanceof Operator) {
                 Operator operator = (Operator) o;
-                tokenMap.put(operator.getPredicate(), operator.getValue());
                 operatorBuilder.add(operator.getValue());
             }
         }
@@ -400,24 +347,6 @@ public abstract class Token {
     }
 
     protected static void init(Class<?> thisClass) {
-        Field[] fields = thisClass.getDeclaredFields();
-        for (Field f : fields) {
-            Object o;
-            try {
-                o = f.get(null);
-            } catch (IllegalAccessException e) {
-                throw new RuntimeException(e);
-            }
-            if (o instanceof Char) {
-                Char aChar = (Char) o;
-                tokenMap.put(aChar.getPredicate(), aChar.getValue());
-            } else if (o instanceof Keyword) {
-                Keyword keyword = (Keyword) o;
-                tokenMap.put(keyword.getPredicate(), keyword.getValue());
-            } else if (o instanceof Operator) {
-                Operator operator = (Operator) o;
-                tokenMap.put(operator.getPredicate(), operator.getValue());
-            }
-        }
+
     }
 }

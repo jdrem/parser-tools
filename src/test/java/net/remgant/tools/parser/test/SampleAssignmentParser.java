@@ -25,11 +25,8 @@ import static net.remgant.tools.parser.test.SampleAssignmentParser.SampleToken.S
 public class SampleAssignmentParser extends Parser {
 
     public static class SampleToken extends Token {
-        @CharToken
         final public static Token EQUALS = new Char("=");
-        @CharToken
         final public static Token SEMI_COLON = new Char(";");
-        @OperatorToken
         final public static Token PLUS_SIGN = new Operator("+");
 
         static {

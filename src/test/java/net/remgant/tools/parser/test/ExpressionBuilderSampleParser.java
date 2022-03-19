@@ -10,22 +10,14 @@ import static net.remgant.tools.parser.test.ExpressionBuilderSampleParser.Sample
 
 public class ExpressionBuilderSampleParser extends Parser {
     public static class SampleToken extends Token {
-        @CharToken
-        final public static Predicate<Token> EQUALS = (t) -> t.getValue().equalsIgnoreCase("=");
-        @CharToken
-        final public static Predicate<Token> SEMI_COLON = (t) -> t.getValue().equalsIgnoreCase(";");
-        @CharToken
-        final static Predicate<Token> LEFT_PAREN = (t) -> t.getValue().equalsIgnoreCase("(");
-        @CharToken
-        final static Predicate<Token> RIGHT_PAREN = (t) -> t.getValue().equalsIgnoreCase(")");
-        @KeywordToken
-        final static Predicate<Token> PLUS_SIGN = (t) -> t.getValue().equals("+");
-        @KeywordToken
-        final static Predicate<Token> MINUS_SIGN = (t) -> t.getValue().equals("-");
-        @KeywordToken
-        final static Predicate<Token> STAR = (t) -> t.getValue().equals("*");
-        @KeywordToken
-        final static Predicate<Token> SLASH = (t) -> t.getValue().equals("/");
+        final public static Token EQUALS = new Token.Char("=");
+        final public static Token SEMI_COLON = new Token.Char(";");
+        final public static Token LEFT_PAREN = new Token.Char("(");
+        final public static Token RIGHT_PAREN = new Token.Char(")");
+        final public static Token PLUS_SIGN = new Token.Char("+");
+        final public static Token MINUS_SIGN = new Token.Char("-");
+        final public static Token STAR = new Token.Char("*");
+        final public static Token SLASH = new Token.Char("/");
 
         static {
             init(SampleAssignmentParser.SampleToken.class);

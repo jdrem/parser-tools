@@ -43,16 +43,14 @@ public abstract class Parser {
         int nextStateNumber;
         ParserAction action;
 
-        /**
-         * @deprecated Will be removed in 2.0.0
-         */
-        @Deprecated
-        State(int stateNumber, Predicate<Token> predicate, int nextStateNumber, ParserAction action) {
-            this.stateNumber = stateNumber;
-            this.predicate = predicate;
-            this.nextStateNumber = nextStateNumber;
-            this.action = action;
-        }
+
+//        @Deprecated
+//        State(int stateNumber, Predicate<Token> predicate, int nextStateNumber, ParserAction action) {
+//            this.stateNumber = stateNumber;
+//            this.predicate = predicate;
+//            this.nextStateNumber = nextStateNumber;
+//            this.action = action;
+//        }
 
         State(int stateNumber, Token token, int nextStateNumber, ParserAction action) {
             this.stateNumber = stateNumber;
@@ -65,10 +63,7 @@ public abstract class Parser {
 
     private final List<List<State>> stateList;
 
-    /**
-     * @deprecated Will be removed in 2.0.0
-     */
-    @Deprecated
+    /*@Deprecated
     protected void addState(int state, Predicate<Token> predicate, int nextState, ParserAction action) {
         if (stateList.size() < state + 1) {
             if (stateList.size() < state + 1)
@@ -84,7 +79,7 @@ public abstract class Parser {
         }
         list.add(new State(state, predicate, nextState, action));
     }
-
+*/
     protected void addState(int state, Token token, int nextState, ParserAction action) {
             if (stateList.size() < state + 1) {
                 if (stateList.size() < state + 1)
