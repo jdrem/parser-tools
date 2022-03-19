@@ -24,6 +24,7 @@ import org.slf4j.LoggerFactory;
 import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -31,48 +32,103 @@ public abstract class Parser {
     final private Logger log = LoggerFactory.getLogger(Parser.class);
 
     protected Lexer lexer;
-    protected Set<Character> lexerSpecialChars;
-    @SuppressWarnings("WeakerAccess")
     protected Set<Integer> terminalStates = ImmutableSet.of();
+    protected Token.TokenFinder tokenFinder;
+    protected ListIterator<Token> tokenIterator;
 
     static class State {
         int stateNumber;
+        Token token;
         Predicate<Token> predicate;
         int nextStateNumber;
         ParserAction action;
 
+        /**
+         * @deprecated Will be removed in 2.0.0
+         */
+        @Deprecated
         State(int stateNumber, Predicate<Token> predicate, int nextStateNumber, ParserAction action) {
             this.stateNumber = stateNumber;
             this.predicate = predicate;
             this.nextStateNumber = nextStateNumber;
             this.action = action;
         }
+
+        State(int stateNumber, Token token, int nextStateNumber, ParserAction action) {
+            this.stateNumber = stateNumber;
+            this.token = token;
+            this.predicate = token.getPredicate();
+            this.nextStateNumber = nextStateNumber;
+            this.action = action;
+        }
     }
 
-    private List<List<State>> stateList;
+    private final List<List<State>> stateList;
 
+    /**
+     * @deprecated Will be removed in 2.0.0
+     */
+    @Deprecated
     protected void addState(int state, Predicate<Token> predicate, int nextState, ParserAction action) {
         if (stateList.size() < state + 1) {
+            if (stateList.size() < state + 1)
+                for (int i = 0; i < state + 1; i++)
+                    stateList.add(null);
             List<State> list = new ArrayList<>();
-            stateList.add(state, list);
+            stateList.set(state, list);
         }
         List<State> list = stateList.get(state);
+        if (list == null) {
+            list = new ArrayList<>();
+            stateList.set(state, list);
+        }
         list.add(new State(state, predicate, nextState, action));
+    }
+
+    protected void addState(int state, Token token, int nextState, ParserAction action) {
+            if (stateList.size() < state + 1) {
+                if (stateList.size() < state + 1)
+                    for (int i=0; i<state + 1; i++)
+                        stateList.add(null);
+                List<State> list = new ArrayList<>();
+                stateList.set(state, list);
+            }
+            List<State> list = stateList.get(state);
+            if (list == null) {
+                list = new ArrayList<>();
+                stateList.set(state, list);
+            }
+        list.add(new State(state, token, nextState, action));
     }
 
     abstract protected void init();
 
     protected Parser() {
-        stateList = new ArrayList<>();
-        init();
+        this(Lexer.defaultSpecialChars);
     }
 
-    protected void printStateDiagram(@SuppressWarnings("SameParameterValue") PrintStream out) {
+    protected Parser(Set<Character> lexicalSpecialChars) {
+        this.stateList = new ArrayList<>();
+        init();
+        Class<?>[] declaredClasses = this.getClass().getDeclaredClasses();
+        for (Class<?> aClass : declaredClasses) {
+            if (Token.class.isAssignableFrom(aClass)) {
+                //noinspection unchecked
+                this.tokenFinder = Token.createTokenFinderFromClass((Class<Token>) aClass);
+                break;
+            }
+        }
+        this.lexer = new Lexer(lexicalSpecialChars, this.tokenFinder != null ? this.tokenFinder : Token.defaultTokenFinder);
+    }
+
+    public void printStateDiagram(@SuppressWarnings("SameParameterValue") PrintStream out) {
         for (List<State> l : stateList) {
+            if (l == null)
+                continue;
             for (State s : l) {
                 String ts;
-                if (Token.tokenMap.containsKey(s.predicate))
-                    ts = Token.tokenMap.get(s.predicate);
+                if (s.token != null)
+                    ts = s.token.toString();
                 else
                     ts = s.predicate.toString();
                 out.printf("%d %s %d%n", s.stateNumber, ts, s.nextStateNumber);
@@ -84,21 +140,17 @@ public abstract class Parser {
         return null;
     }
     
-    public ParserResult parse(String source) throws Exception {
-//        Lexer lexer;
-        if (lexerSpecialChars == null)
-            lexer = new Lexer(source);
-        else
-            lexer = new Lexer(lexerSpecialChars, source);
+    public ParserResult parse(String source) throws ParserException {
         int state = 0;
         int r;
         ParserResult parserResult = resultInitializer();
         Token token;
-        while (lexer.hasNext()) {
-            token = lexer.next();
+        tokenIterator= lexer.tokenize(source);
+        while (tokenIterator.hasNext()) {
+            token = tokenIterator.next();
             log.trace(String.format("token=%s, state=%s", token, state));
             if (state < 0)
-                throw new Exception(String.format("no next state for token %s", token));
+                throw new NoStateForTokenException(token.getValue());
             List<State> plist = stateList.get(state);
             r = -1;
             for (int i = 0; i < plist.size(); i++) {
@@ -111,7 +163,7 @@ public abstract class Parser {
             }
             if (r == -1) {
                 log.trace(String.format("no match: token=%s, state=%d", token, state));
-                throw new Exception("Parser error");
+                throw new NoMatchForTokenException(token.getValue(), state);
             }
 
             if (plist.get(r).action != null)

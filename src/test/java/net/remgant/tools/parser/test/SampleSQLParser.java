@@ -30,13 +30,17 @@ import static net.remgant.tools.parser.test.SampleSQLParser.SQLToken.*;
 public class SampleSQLParser extends Parser {
     public static class SQLToken extends Token {
         @KeywordToken
-        final public static Predicate<Token> SELECT = (t) -> t.getValue().equalsIgnoreCase("SELECT");
+        final public static Token SELECT = new Keyword("SELECT");
         @KeywordToken
-        final public static Predicate<Token> FROM = (t) -> t.getValue().equalsIgnoreCase("FROM");
+        final public static Token FROM = new Keyword("FROM");
+        final public static Token WHERE = new Keyword("WHERE");
+
         @CharToken
-        final public static Predicate<Token> STAR = (t) -> t.getValue().equalsIgnoreCase("*");
+        final public static Token STAR = new Char("*");
         @CharToken
-        final public static Predicate<Token> COMMA = (t) -> t.getValue().equalsIgnoreCase(",");
+        final public static Token COMMA = new Char(",");
+        final public static Token EQ = new Char("=");
+
 
         static {
             init(SQLToken.class);
@@ -71,9 +75,7 @@ public class SampleSQLParser extends Parser {
     }
 
     SampleSQLParser() {
-        super();
-        lexerSpecialChars = ImmutableSet.of('*', ',');
-        init();
+        super(ImmutableSet.of('*', ','));
     }
 
     @Override
@@ -86,7 +88,7 @@ public class SampleSQLParser extends Parser {
             ((SelectCommand) c).setProjectAll(true);
             return c;
         });
-        addState(1, Token.Identifier.INSTANCE, 3, (s, c) -> {
+        addState(1, Identifier.INSTANCE_, 3, (s, c) -> {
             ((SelectCommand) c).addProjectTerm(s);
             return c;
         });
@@ -96,14 +98,14 @@ public class SampleSQLParser extends Parser {
 
         // State 3
         addState(3, FROM, 7, null);
-        addState(3, Token.Identifier.INSTANCE, 4, (s, c) -> {
+        addState(3, Identifier.INSTANCE_, 4, (s, c) -> {
             ((SelectCommand) c).addProjectTerm(s);
             return c;
         });
         addState(3, COMMA, 1, null);
 
         // State 4
-        addState(4, Identifier.INSTANCE, 6, (s, c) -> {
+        addState(4, Identifier.INSTANCE_, 6, (s, c) -> {
             ((SelectCommand) c).addProjectTerm(s);
             return c;
         });
@@ -117,17 +119,27 @@ public class SampleSQLParser extends Parser {
 
         // State 6
         addState(6, FROM, 7, null);
-        addState(6, Identifier.INSTANCE, 5, null);
+        addState(6, Identifier.INSTANCE_, 5, null);
         addState(6, COMMA, 1, null);
 
         // State 7
-        addState(7, Identifier.INSTANCE, 8, (s, c) -> {
+        addState(7, Identifier.INSTANCE_, 8, (s, c) -> {
             ((SelectCommand) c).addFromTable(s);
             return c;
         });
+
+        // State 8
+        addState(8, WHERE, 9, null);
+
+        // State 9
+        addState(9, Identifier.INSTANCE_, 10, null);
+
+        addState(10, EQ, 11, null);
+
+        addState(11, TokenSet.of(CharString.INSTANCE_, NumericString.INSTANCE_), 12, null);
     }
 
-    public static void main(String args[]) {
+    public static void main(String[] args) {
         new SampleSQLParser().printStateDiagram(System.out);
     }
 }

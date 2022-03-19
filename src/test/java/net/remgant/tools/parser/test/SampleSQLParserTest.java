@@ -16,6 +16,7 @@
  */
 package net.remgant.tools.parser.test;
 
+import net.remgant.tools.parser.ParserException;
 import net.remgant.tools.parser.ParserResult;
 import org.junit.Test;
 
@@ -23,7 +24,7 @@ import static org.junit.Assert.assertEquals;
 
 public class SampleSQLParserTest {
     @Test
-    public void testSelectStatement() throws Exception {
+    public void testSelectStatement() throws ParserException {
         SampleSQLParser parser = new SampleSQLParser();
         ParserResult parserResult = parser.parse("select * from employee");
         System.out.println(parserResult);
