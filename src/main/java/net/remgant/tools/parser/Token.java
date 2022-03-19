@@ -123,7 +123,7 @@ public abstract class Token {
 
 
     public static class Identifier extends Token {
-        private static final Pattern instancePattern = Pattern.compile("\\p{Alpha}\\p{Alnum}*");
+        private static final Pattern instancePattern = Pattern.compile("\\p{Alpha}\\w*");
         public static final Predicate<Token> INSTANCE = (t) -> instancePattern.matcher(t.value).matches();
 
         static {
